@@ -1,0 +1,73 @@
+`timescale 1ns/1ps
+
+module vendingmachine_tb;
+
+// Inputs
+reg clk;
+reg rst;
+reg [1:0] in;
+
+// Outputs
+wire out;
+wire [1:0] change;
+
+// Instantiate DUT
+vendingmachine uut (
+    .clk(clk),
+    .rst(rst),
+    .in(in),
+    .out(out),
+    .change(change)
+);
+
+// Clock generation (10ns period)
+always #5 clk = ~clk;
+
+initial begin
+    // Initialize
+    clk = 0;
+    rst = 1;
+    in = 2'b00;
+
+    // Apply reset
+    #10 rst = 0;
+
+    // -----------------------------
+    // Test Case 1: Insert ₹5
+    // -----------------------------
+    #10 in = 2'b01;   // s0 → s1
+    #10 in = 2'b00;
+
+    // -----------------------------
+    // Test Case 2: ₹5 + ₹5 = dispense
+    // -----------------------------
+    #10 in = 2'b01;   // s1 → dispense
+    #10 in = 2'b00;
+
+    // -----------------------------
+    // Test Case 3: Insert ₹10 → return change
+    // -----------------------------
+    #10 in = 2'b10;   // s0 → s2
+    #10 in = 2'b00;
+
+    // -----------------------------
+    // Test Case 4: ₹10 + ₹5 = dispense
+    // -----------------------------
+    #10 in = 2'b10;
+    #10 in = 2'b01;
+
+    // -----------------------------
+    // Test Case 5: ₹10 + ₹10 = dispense + change
+    // -----------------------------
+    #10 in = 2'b10;
+    #10 in = 2'b10;
+
+    // Stop simulation
+    #20 $finish;
+end
+
+// Monitor values
+initial begin
+    $monitor("Time=%0t | in=%b | state=%b | out=%b | change=%b",
+              $time, in, uut.c_state, out, change);
+end
